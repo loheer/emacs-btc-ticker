@@ -44,8 +44,11 @@
 (defvar btc-ticker-mode-line " $0.00"
   "Displayed on mode-line")
 
+(defvar btc-ticker-value 0
+  "")
+
 ;;very risky :)
-(put 'btc-ticker-mode-line 'risky-local-variable t)
+;;(put 'btc-ticker-mode-line 'risky-local-variable t)
 
 (defun btc-ticker-start()
   (unless btc-ticker-timer
@@ -68,6 +71,16 @@
         (if (boundp 'mode-line-modes)
             (add-to-list 'mode-line-modes '(t btc-ticker-mode-line) t)))))
 
+(defun btc-ticker-set-status (new-value)
+  (progn
+  (if (< (string-to-int new-value) (string-to-int btc-ticker-value))
+      (setq btc-ticker-mode-line (propertize (concat " $" new-value) 'font-lock-face '(:foreground "red"))))
+  (if (> (string-to-int new-value) (string-to-int btc-ticker-value))
+      (setq btc-ticker-mode-line (propertize (concat " $" new-value) 'font-lock-face '(:foreground "green"))))
+  (if (= (string-to-int new-value) (string-to-int btc-ticker-value))
+      (setq btc-ticker-mode-line (concat " $" new-value)))
+   ))
+
 (defun btc-ticker-fetch()
   (progn
     (request
@@ -75,8 +88,8 @@
      :parser 'json-read
      :success (function*
                (lambda(&key data &allow-other-keys)
-		 (setq btc-ticker-mode-line
-		       (concat " $" (assoc-default 'last data))))))))
+		 (btc-ticker-set-status
+		       (assoc-default 'last data)))))))
 
 ;;;###autoload
 (define-minor-mode btc-ticker-mode
